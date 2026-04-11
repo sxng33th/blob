@@ -26,14 +26,12 @@ function renderAll() {
 
 function doRandomize() {
   randomizeRadii(false);
-  syncRadiiUI(document.getElementById('dynamic-controls'));
-  renderAll();
+  updateBlobSVG(svgEls);
 }
 
 function doRandomizeAll() {
   randomizeRadii(true);
-  syncRadiiUI(document.getElementById('dynamic-controls'));
-  renderAll();
+  updateBlobSVG(svgEls);
 }
 
 // ------------------------
@@ -66,7 +64,6 @@ function syncAllUI() {
   document.getElementById('roundness-val').textContent = blob.roundness+'%';
   
   buildStopsUI(document.getElementById('stops-container'), renderAll);
-  buildRadiiUI(document.getElementById('dynamic-controls'), renderAll);
 }
 
 // ------------------------
@@ -208,7 +205,6 @@ document.getElementById('points-slider').addEventListener('input', e => {
     blob.radii = blob.radii.slice(0, newN);
   }
   blob.numPoints = newN;
-  buildRadiiUI(document.getElementById('dynamic-controls'), renderAll);
   renderAll();
 });
 
@@ -344,3 +340,45 @@ initRadii();
 renderLayersUI();
 syncAllUI();
 renderAll();
+
+let activeDragPointIndex = null;
+
+svgEls.pointsGroup.addEventListener('pointerdown', (e) => {
+  if (e.target.tagName === 'circle') {
+    const circles = Array.from(svgEls.pointsGroup.children);
+    activeDragPointIndex = circles.indexOf(e.target);
+    if(activeDragPointIndex !== -1) {
+      state.isDraggingPoint = true;
+      svgEls.blobSvg.setPointerCapture(e.pointerId);
+      updateBlobSVG(svgEls);
+    }
+  }
+});
+
+svgEls.blobSvg.addEventListener('pointermove', (e) => {
+  if (state.isDraggingPoint && activeDragPointIndex !== null) {
+      const pt = svgEls.blobSvg.createSVGPoint();
+      pt.x = e.clientX;
+      pt.y = e.clientY;
+      const svgPt = pt.matrixTransform(svgEls.blobSvg.getScreenCTM().inverse());
+      const dist = Math.sqrt(svgPt.x * svgPt.x + svgPt.y * svgPt.y);
+      
+      const maxSize = Math.max(...state.blobs.map(b => b.size || 300));
+      const activeBlob = getActiveBlob();
+      const activeScale = (activeBlob.size || 300) / maxSize;
+      
+      const newRadius = Math.max(10, Math.min(100, Math.round(dist / activeScale)));
+      activeBlob.radii[activeDragPointIndex] = newRadius;
+      
+      updateBlobSVG(svgEls);
+  }
+});
+
+svgEls.blobSvg.addEventListener('pointerup', (e) => {
+  if (state.isDraggingPoint) {
+     state.isDraggingPoint = false;
+     activeDragPointIndex = null;
+     svgEls.blobSvg.releasePointerCapture(e.pointerId);
+     updateBlobSVG(svgEls);
+  }
+});
