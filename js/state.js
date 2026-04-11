@@ -28,6 +28,8 @@ const state = {
   animInterval: null,
   animTiming: 500,
   animEase: 'ease-out',
+  gradRotate: false,
+  gradRotSpeed: 50,
   gooeyMerge: false,
   globalBlur: 0,
   globalNoise: 0

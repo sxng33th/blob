@@ -59,6 +59,11 @@ function generatePath(blob) {
 
 let pointCircles = [];
 function updateBlobSVG(svgEls) {
+  const maxSize = Math.max(...state.blobs.map(b => b.size || 300));
+  
+  svgEls.blobSvg.style.width = maxSize + 'px';
+  svgEls.blobSvg.style.height = maxSize + 'px';
+
   while(svgEls.blobsGroup.children.length > state.blobs.length) {
     svgEls.blobsGroup.removeChild(svgEls.blobsGroup.lastChild);
   }
@@ -70,6 +75,9 @@ function updateBlobSVG(svgEls) {
   state.blobs.forEach((blob, idx) => {
     const path = svgEls.blobsGroup.children[idx];
     path.setAttribute('d', generatePath(blob));
+    
+    const scale = (blob.size || 300) / maxSize;
+    path.setAttribute('transform', `scale(${scale})`);
     
     if (blob.fillMode === 'solid') {
       path.setAttribute('fill', blob.solidColor);
@@ -87,6 +95,9 @@ function updateBlobSVG(svgEls) {
   const pts = getPoints(activeBlob);
   const duration = state.animTiming;
   const ease = state.animEase;
+
+  const activeScale = (activeBlob.size || 300) / maxSize;
+  svgEls.pointsGroup.setAttribute('transform', `scale(${activeScale})`);
 
   if (pointCircles.length !== activeBlob.numPoints) {
     svgEls.pointsGroup.innerHTML = '';

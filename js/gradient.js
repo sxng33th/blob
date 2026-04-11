@@ -54,22 +54,56 @@ function updateGradientSVG(svgEls) {
     const y1 = Math.round(50 - Math.sin(rad) * R) + '%';
     const x2 = Math.round(50 + Math.cos(rad) * R) + '%';
     const y2 = Math.round(50 + Math.sin(rad) * R) + '%';
+    const fx = Math.round(50 - Math.cos(rad) * (R * 0.5)) + '%';
+    const fy = Math.round(50 - Math.sin(rad) * (R * 0.5)) + '%';
     
     defsMarkup += `
       <linearGradient id="blob-grad-linear-${blob.id}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}">
         ${stopsMarkup}
       </linearGradient>
-      <radialGradient id="blob-grad-radial-${blob.id}" cx="50%" cy="50%" r="${R}%">
+      <radialGradient id="blob-grad-radial-${blob.id}" cx="50%" cy="50%" r="${R}%" fx="${fx}" fy="${fy}">
         ${stopsMarkup}
       </radialGradient>
     `;
   });
 
   svgEls.defsGroup.innerHTML = defsMarkup;
-  
-  if (state.blobs.length > 0) {
-      const activeColor = getPrimaryColor(getActiveBlob());
-      svgEls.blobSvg.style.filter = `drop-shadow(0 0 40px ${activeColor}50)`;
+}
+
+function updateGradientAnglesDOM() {
+  state.blobs.forEach(blob => {
+    const rad = blob.gradAngle * (Math.PI / 180);
+    const R = 50 * (blob.gradSpread / 100);
+
+    const x1 = Math.round(50 - Math.cos(rad) * R) + '%';
+    const y1 = Math.round(50 - Math.sin(rad) * R) + '%';
+    const x2 = Math.round(50 + Math.cos(rad) * R) + '%';
+    const y2 = Math.round(50 + Math.sin(rad) * R) + '%';
+    
+    const linear = document.getElementById(`blob-grad-linear-${blob.id}`);
+    if (linear) {
+       linear.setAttribute('x1', x1);
+       linear.setAttribute('y1', y1);
+       linear.setAttribute('x2', x2);
+       linear.setAttribute('y2', y2);
+    }
+    
+    const fx = Math.round(50 - Math.cos(rad) * (R * 0.5)) + '%';
+    const fy = Math.round(50 - Math.sin(rad) * (R * 0.5)) + '%';
+    const radial = document.getElementById(`blob-grad-radial-${blob.id}`);
+    if (radial) {
+       radial.setAttribute('fx', fx);
+       radial.setAttribute('fy', fy);
+    }
+  });
+}
+
+function syncGradAngleUI() {
+  const angleSlider = document.getElementById('grad-angle');
+  if (angleSlider && document.getElementById('gradient-controls').style.display !== 'none') {
+    const val = Math.round(getActiveBlob().gradAngle);
+    angleSlider.value = val;
+    document.getElementById('grad-angle-val').textContent = val + '°';
   }
 }
 

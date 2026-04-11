@@ -169,9 +169,8 @@
           <span class="value" id="timing-val">500ms</span>
       </div>
       
-      <div class="input-row">
+      <div class="input-row" style="margin-bottom: 1rem;">
           <span class="label">Easing</span>
-          <!-- Added full padding right drop down caret base64 in css -->
           <select id="ease-select" class="custom-select">
             <option value="linear">Linear</option>
             <option value="ease">Ease</option>
@@ -180,6 +179,22 @@
             <option value="ease-in-out">Ease In/Out</option>
             <option value="cubic-bezier(0.68, -0.55, 0.265, 1.55)">Bouncy</option>
           </select>
+      </div>
+
+      <div style="border-top: 1px solid var(--border); margin-top: 1rem; margin-bottom: 1rem;"></div>
+
+      <div class="toggle-row" style="margin-bottom: 0.5rem;">
+        <span class="label">Gradient Rotation</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="grad-rotate-toggle">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="input-row">
+          <span class="label">Rotation Speed</span>
+          <input type="range" id="grad-rotate-speed" min="1" max="100" step="1" value="50">
+          <span class="value" id="grad-rotate-speed-val">50</span>
       </div>
     </details>
   </aside>

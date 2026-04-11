@@ -57,6 +57,9 @@ function syncAllUI() {
 
   document.getElementById('blend-mode-select').value = blob.blendMode;
 
+  document.getElementById('size-slider').value = blob.size || 300;
+  document.getElementById('size-val').textContent = (blob.size || 300)+'px';
+
   document.getElementById('points-slider').value = blob.numPoints;
   document.getElementById('points-val').textContent = blob.numPoints;
   document.getElementById('roundness-slider').value = blob.roundness;
@@ -178,10 +181,9 @@ document.getElementById('grad-spread').addEventListener('input', e => {
 });
 
 document.getElementById('size-slider').addEventListener('input', e => {
-  state.size = parseInt(e.target.value);
-  document.getElementById('size-val').textContent = state.size+'px';
-  svgEls.blobSvg.style.width = state.size+'px';
-  svgEls.blobSvg.style.height = state.size+'px';
+  getActiveBlob().size = parseInt(e.target.value);
+  document.getElementById('size-val').textContent = getActiveBlob().size+'px';
+  renderAll();
 });
 
 document.getElementById('global-blur').addEventListener('input', e => {
@@ -235,6 +237,19 @@ document.getElementById('play-btn').addEventListener('click', (e) => {
   }
 });
 
+document.getElementById('grad-rotate-toggle').addEventListener('change', e => {
+  state.gradRotate = e.target.checked;
+  if (state.animInterval) {
+    stopAnimation();
+    startAnimation(doRandomizeAll);
+  }
+});
+
+document.getElementById('grad-rotate-speed').addEventListener('input', e => {
+  state.gradRotSpeed = parseInt(e.target.value);
+  document.getElementById('grad-rotate-speed-val').textContent = state.gradRotSpeed;
+});
+
 document.getElementById('timing-slider').addEventListener('input', e => {
   document.getElementById('timing-val').textContent = e.target.value+'ms';
   changeTiming(e.target.value, doRandomizeAll);
@@ -278,11 +293,11 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   document.getElementById('global-noise').value = 0;
   document.getElementById('global-noise-val').textContent = '0%';
   
-  state.size = 300;
-  document.getElementById('size-slider').value = 300;
-  document.getElementById('size-val').textContent = '300px';
-  svgEls.blobSvg.style.width = '300px';
-  svgEls.blobSvg.style.height = '300px';
+  state.gradRotate = false;
+  document.getElementById('grad-rotate-toggle').checked = false;
+  state.gradRotSpeed = 50;
+  document.getElementById('grad-rotate-speed').value = 50;
+  document.getElementById('grad-rotate-speed-val').textContent = '50';
   
   initRadii();
   renderLayersUI();

@@ -1,5 +1,6 @@
 
 function generateSVGMarkup(svgEls) {
+  const maxSize = Math.max(...state.blobs.map(b => b.size || 300));
   let defsMarkup = '';
   
   if (state.gooeyMerge) {
@@ -25,11 +26,14 @@ function generateSVGMarkup(svgEls) {
       if (blob.fillMode === 'solid') fillTarg = blob.solidColor;
       else if (blob.fillMode === 'linear') fillTarg = `url(#blob-grad-linear-${blob.id})`;
       else if (blob.fillMode === 'radial') fillTarg = `url(#blob-grad-radial-${blob.id})`;
-      
+
       let styleStr = '';
-      if(blob.blendMode !== 'normal') styleStr = ` style="mix-blend-mode: ${blob.blendMode};"`;
+      if (blob.blendMode && blob.blendMode !== 'normal') {
+          styleStr += ` style="mix-blend-mode: ${blob.blendMode};"`;
+      }
       
-      return `    <path fill="${fillTarg}" d="${generatePath(blob)}"${styleStr} />`;
+      const scale = (blob.size || 300) / maxSize;
+      return `    <path fill="${fillTarg}" transform="scale(${scale})" d="${generatePath(blob)}"${styleStr} />`;
   }).join('\n');
 
   let postProcStart = '';
@@ -39,7 +43,7 @@ function generateSVGMarkup(svgEls) {
     postProcEnd = '  </g>\n';
   }
 
-  return `<svg viewBox="-110 -110 220 220" xmlns="http://www.w3.org/2000/svg">\n  <defs>\n${defsMarkup}  </defs>\n${postProcStart}  <g id="blobs-group"${activeFilter}>\n${pathMarkup}\n  </g>\n${postProcEnd}</svg>`;
+  return `<svg width="${maxSize}" height="${maxSize}" viewBox="-110 -110 220 220" xmlns="http://www.w3.org/2000/svg">\n  <defs>\n${defsMarkup}  </defs>\n${postProcStart}  <g id="blobs-group"${activeFilter}>\n${pathMarkup}\n  </g>\n${postProcEnd}</svg>`;
 }
 
 function showToast(msg) {
