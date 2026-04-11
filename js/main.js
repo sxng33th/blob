@@ -267,6 +267,18 @@ document.getElementById('copy-btn').addEventListener('click', () => {
   }
 });
 
+document.getElementById('copy-anim-btn').addEventListener('click', () => {
+  const svgText = generateAnimatedSVGMarkup(svgEls);
+  
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(svgText).then(() => {
+      showToast('Animated SVG Copied!');
+    }).catch(() => fallbackCopy(svgText));
+  } else {
+    fallbackCopy(svgText);
+  }
+});
+
 function fallbackCopy(text) {
   const textArea = document.createElement("textarea");
   textArea.value = text;
