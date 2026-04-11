@@ -14,8 +14,8 @@
       <h1>BLOB GENERATOR</h1>
     </div>
     
-    <section class="control-group">
-      <label class="section-header">APPEARANCE</label>
+    <details class="control-group" open>
+      <summary class="section-header">APPEARANCE</summary>
       <div class="color-input">
         <span class="label">Fill</span>
         <div class="color-with-hex">
@@ -33,6 +33,11 @@
           <input type="range" id="points-slider" min="3" max="30" value="8">
           <span class="value" id="points-val">8</span>
       </div>
+      <div class="input-row">
+          <span class="label">Roundness</span>
+          <input type="range" id="roundness-slider" min="0" max="100" value="40">
+          <span class="value" id="roundness-val">40%</span>
+      </div>
       <div class="toggle-row" style="margin-top: 1rem;">
         <span class="label">Show Points</span>
         <label class="toggle-switch">
@@ -40,14 +45,14 @@
           <span class="toggle-slider"></span>
         </label>
       </div>
-    </section>
+    </details>
 
-    <section class="control-group">
-      <label class="section-header">SHAPE CONTROL (RADII)</label>
+    <details class="control-group" open>
+      <summary class="section-header">SHAPE CONTROL (RADII)</summary>
       <div id="dynamic-controls">
          <!-- Sliders populated dynamically -->
       </div>
-    </section>
+    </details>
 
     <section class="action-group">
       <button class="btn-primary" id="copy-btn">Copy SVG</button>
@@ -71,8 +76,8 @@
       <h1>ANIMATE PANEL</h1>
     </div>
     
-    <section class="control-group">
-      <label class="section-header">PLAYBACK</label>
+    <details class="control-group" open>
+      <summary class="section-header">PLAYBACK</summary>
       <div class="input-row" style="margin-bottom: 1.5rem;">
         <button class="btn-primary" id="play-btn" style="width: 48%;">Start</button>
         <button class="btn-secondary" id="stop-btn" style="width: 48%;">Stop</button>
@@ -96,7 +101,7 @@
             <option value="cubic-bezier(0.68, -0.55, 0.265, 1.55)">Bouncy</option>
           </select>
       </div>
-    </section>
+    </details>
   </aside>
 </div>
 

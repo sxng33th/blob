@@ -75,13 +75,13 @@ aside.right-sidebar {
   color: var(--text-main);
 }
 
-.control-group {
+details.control-group {
   margin-bottom: 2rem;
   border-bottom: 1px solid var(--border);
   padding-bottom: 1rem;
 }
 
-.control-group:last-child {
+details.control-group:last-child {
   border-bottom: none;
 }
 
@@ -94,8 +94,9 @@ aside.right-sidebar {
   padding-top: 2rem;
 }
 
-label.section-header {
-  display: block;
+summary.section-header {
+  display: flex;
+  align-items: center;
   font-family: 'Inter', sans-serif;
   font-size: 0.65rem;
   font-weight: 600;
@@ -103,6 +104,25 @@ label.section-header {
   letter-spacing: 0.15rem;
   color: var(--text-dim);
   margin-bottom: 1rem;
+  cursor: pointer;
+  list-style: none;
+  outline: none;
+}
+
+summary.section-header::-webkit-details-marker {
+  display: none;
+}
+
+summary.section-header::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: 0.5rem;
+  transition: transform 0.2s ease;
+  font-size: 0.8rem;
+}
+
+details.control-group[open] summary.section-header::before {
+  transform: rotate(90deg);
 }
 
 .input-row {

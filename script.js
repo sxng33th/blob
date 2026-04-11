@@ -6,6 +6,8 @@ const sizeSlider = document.getElementById('size-slider');
 const sizeVal = document.getElementById('size-val');
 const pointsSlider = document.getElementById('points-slider');
 const pointsVal = document.getElementById('points-val');
+const roundnessSlider = document.getElementById('roundness-slider');
+const roundnessVal = document.getElementById('roundness-val');
 const fillColor = document.getElementById('fill-color');
 const fillHex = document.getElementById('fill-hex');
 const toast = document.getElementById('toast');
@@ -59,6 +61,10 @@ function getPoints() {
 function generatePath() {
   const pts = getPoints();
   const n = pts.length;
+  
+  const roundness = parseInt(roundnessSlider.value) / 100;
+  const k = roundness * 0.4;
+  
   if(n === 0) return '';
   
   let d = `M ${pts[0].x},${pts[0].y}`;
@@ -68,11 +74,11 @@ function generatePath() {
     let p2 = pts[(i + 1) % n];
     let p3 = pts[(i + 2) % n];
 
-    let cp1x = p1.x + (p2.x - p0.x) / 6;
-    let cp1y = p1.y + (p2.y - p0.y) / 6;
+    let cp1x = p1.x + (p2.x - p0.x) * k;
+    let cp1y = p1.y + (p2.y - p0.y) * k;
 
-    let cp2x = p2.x - (p3.x - p1.x) / 6;
-    let cp2y = p2.y - (p3.y - p1.y) / 6;
+    let cp2x = p2.x - (p3.x - p1.x) * k;
+    let cp2y = p2.y - (p3.y - p1.y) * k;
 
     d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
   }
@@ -179,6 +185,11 @@ showPointsToggle.addEventListener('change', (e) => {
   pointsGroup.style.opacity = e.target.checked ? '1' : '0';
 });
 
+roundnessSlider.addEventListener('input', (e) => {
+  roundnessVal.textContent = `${e.target.value}%`;
+  updateBlob();
+});
+
 sizeSlider.addEventListener('input', (e) => {
   const val = e.target.value;
   sizeVal.textContent = `${val}px`;
@@ -230,6 +241,8 @@ function reset() {
   numPoints = 8;
   pointsSlider.value = numPoints;
   pointsVal.textContent = numPoints;
+  roundnessSlider.value = 40;
+  roundnessVal.textContent = '40%';
   showPointsToggle.checked = false;
   pointsGroup.style.opacity = '0';
   initRadii();
