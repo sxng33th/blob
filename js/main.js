@@ -260,10 +260,34 @@ document.getElementById('ease-select').addEventListener('change', e => {
 
 // Actions
 document.getElementById('copy-btn').addEventListener('click', () => {
-  navigator.clipboard.writeText(generateSVGMarkup(svgEls)).then(() => {
-    showToast('SVG Copied!');
-  }).catch(() => showToast('Copy Failed'));
+  const svgText = generateSVGMarkup(svgEls);
+  
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(svgText).then(() => {
+      showToast('SVG Copied!');
+    }).catch(() => fallbackCopy(svgText));
+  } else {
+    fallbackCopy(svgText);
+  }
 });
+
+function fallbackCopy(text) {
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  textArea.style.position = "fixed";
+  textArea.style.top = "-999999px";
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  
+  try {
+    document.execCommand('copy');
+    showToast('SVG Copied!');
+  } catch (err) {
+    showToast('Copy Failed');
+  }
+  document.body.removeChild(textArea);
+}
 
 document.getElementById('random-btn').addEventListener('click', () => {
   doRandomize();

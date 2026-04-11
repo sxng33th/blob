@@ -43,6 +43,8 @@ function generateSVGMarkup(svgEls) {
     postProcEnd = '  </g>\n';
   }
 
+  let activeFilter = state.gooeyMerge ? ' filter="url(#gooey)"' : '';
+
   return `<svg width="${maxSize}" height="${maxSize}" viewBox="-110 -110 220 220" xmlns="http://www.w3.org/2000/svg">\n  <defs>\n${defsMarkup}  </defs>\n${postProcStart}  <g id="blobs-group"${activeFilter}>\n${pathMarkup}\n  </g>\n${postProcEnd}</svg>`;
 }
 
