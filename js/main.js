@@ -1,133 +1,246 @@
-import { state } from './state.js';
-import { initRadii, randomizeRadii, updateBlobSVG, buildRadiiUI, syncRadiiUI } from './blob.js';
-import { updateGradientSVG, buildStopsUI, addStop } from './gradient.js';
-import { startAnimation, stopAnimation, changeTiming, updateTransitions } from './animation.js';
-import { generateSVGMarkup, showToast } from './export.js';
 
-// Base Refs
 const svgEls = {
   blobSvg: document.getElementById('blob-svg'),
-  blobPath: document.getElementById('blob-path'),
-  pointsGroup: document.getElementById('points-group'),
-  blobGradLin: document.getElementById('blob-grad-linear'),
-  blobGradRad: document.getElementById('blob-grad-radial')
+  blobsGroup: document.getElementById('blobs-group'),
+  defsGroup: document.getElementById('svg-defs-group'),
+  pointsGroup: document.getElementById('points-group')
 };
 
 function renderAll() {
+  if (state.gooeyMerge) {
+    svgEls.blobsGroup.setAttribute('filter', 'url(#gooey)');
+  } else {
+    svgEls.blobsGroup.removeAttribute('filter');
+  }
+  
+  const postProcGrp = document.getElementById('post-process-group');
+  if (state.globalBlur > 0 || state.globalNoise > 0) {
+    postProcGrp.setAttribute('filter', 'url(#post-process)');
+  } else {
+    postProcGrp.removeAttribute('filter');
+  }
+  
   updateGradientSVG(svgEls);
   updateBlobSVG(svgEls);
 }
 
 function doRandomize() {
-  randomizeRadii();
+  randomizeRadii(false);
   syncRadiiUI(document.getElementById('dynamic-controls'));
   renderAll();
 }
 
-// Color and Mode Settings
-const solidColorInput = document.getElementById('solid-color');
-const solidHexInput = document.getElementById('solid-hex');
-const fillTypeSelect = document.getElementById('fill-type-select');
+function doRandomizeAll() {
+  randomizeRadii(true);
+  syncRadiiUI(document.getElementById('dynamic-controls'));
+  renderAll();
+}
 
-solidColorInput.addEventListener('input', e => { 
-  state.solidColor = e.target.value; 
-  solidHexInput.value = state.solidColor; 
-  renderAll(); 
-});
-solidHexInput.addEventListener('change', e => {
-  let val = e.target.value;
-  if(!val.startsWith('#')) val = '#' + val;
-  if(/^#([0-9A-F]{3}){1,6}$/i.test(val)) {
-    state.solidColor = val;
-    solidColorInput.value = val;
-    renderAll();
-  } else {
-    e.target.value = state.solidColor;
-  }
-});
+// ------------------------
+// UI Syncer
+// ------------------------
+function syncAllUI() {
+  const blob = getActiveBlob();
+  
+  document.getElementById('fill-type-select').value = blob.fillMode;
+  document.getElementById('solid-controls').style.display = blob.fillMode === 'solid' ? 'block' : 'none';
+  document.getElementById('gradient-controls').style.display = blob.fillMode === 'solid' ? 'none' : 'block';
+  document.getElementById('grad-angle-row').style.display = blob.fillMode === 'linear' ? 'flex' : 'none';
 
-fillTypeSelect.addEventListener('change', e => {
-  state.fillMode = e.target.value;
-  document.getElementById('solid-controls').style.display = state.fillMode === 'solid' ? 'block' : 'none';
-  document.getElementById('gradient-controls').style.display = state.fillMode === 'solid' ? 'none' : 'block';
-  document.getElementById('grad-angle-row').style.display = state.fillMode === 'linear' ? 'flex' : 'none';
+  document.getElementById('solid-color').value = blob.solidColor;
+  document.getElementById('solid-hex').value = blob.solidColor;
+
+  document.getElementById('grad-angle').value = blob.gradAngle;
+  document.getElementById('grad-angle-val').textContent = blob.gradAngle+'°';
+  document.getElementById('grad-spread').value = blob.gradSpread;
+  document.getElementById('grad-spread-val').textContent = blob.gradSpread+'%';
+
+  document.getElementById('blend-mode-select').value = blob.blendMode;
+
+  document.getElementById('points-slider').value = blob.numPoints;
+  document.getElementById('points-val').textContent = blob.numPoints;
+  document.getElementById('roundness-slider').value = blob.roundness;
+  document.getElementById('roundness-val').textContent = blob.roundness+'%';
+  
+  buildStopsUI(document.getElementById('stops-container'), renderAll);
+  buildRadiiUI(document.getElementById('dynamic-controls'), renderAll);
+}
+
+// ------------------------
+// Layers System
+// ------------------------
+function renderLayersUI() {
+  const container = document.getElementById('layers-list');
+  container.innerHTML = '';
+  
+  state.blobs.forEach((blob, idx) => {
+    const item = document.createElement('div');
+    item.className = 'layer-item';
+    if(idx === state.activeBlobIndex) item.classList.add('active');
+    
+    // click wrapper
+    const nameWrap = document.createElement('div');
+    nameWrap.className = 'layer-name';
+    nameWrap.textContent = blob.name;
+    nameWrap.addEventListener('click', () => {
+      state.activeBlobIndex = idx;
+      renderLayersUI();
+      syncAllUI();
+      renderAll();
+    });
+    
+    const actions = document.createElement('div');
+    actions.className = 'layer-actions';
+    
+    if (state.blobs.length > 1) {
+       const delBtn = document.createElement('button');
+       delBtn.className = 'btn-reset';
+       delBtn.textContent = '✖';
+       delBtn.addEventListener('click', (e) => {
+         e.stopPropagation();
+         state.blobs.splice(idx, 1);
+         if (state.activeBlobIndex >= state.blobs.length) {
+             state.activeBlobIndex = state.blobs.length - 1;
+         }
+         renderLayersUI();
+         syncAllUI();
+         renderAll();
+       });
+       actions.appendChild(delBtn);
+    }
+    
+    item.appendChild(nameWrap);
+    item.appendChild(actions);
+    container.appendChild(item);
+  });
+}
+
+document.getElementById('add-layer-btn').addEventListener('click', () => {
+  const newBlob = generateDefaultBlob(state.nextBlobId++);
+  state.blobs.push(newBlob);
+  state.activeBlobIndex = state.blobs.length - 1;
+  initRadii(); // generates radius array specifically for this newly active blob
+  renderLayersUI();
+  syncAllUI();
   renderAll();
 });
 
-// Dynamic Stops
-const stopsContainer = document.getElementById('stops-container');
-document.getElementById('add-stop-btn').addEventListener('click', () => addStop(stopsContainer, renderAll));
+document.getElementById('gooey-toggle').addEventListener('change', e => {
+  state.gooeyMerge = e.target.checked;
+  renderAll();
+});
 
-// Angles and Layout Spread
-const gradAngleInput = document.getElementById('grad-angle');
-gradAngleInput.addEventListener('input', e => { 
-  state.gradAngle = e.target.value; 
-  document.getElementById('grad-angle-val').textContent = state.gradAngle+'°'; 
+document.getElementById('blend-mode-select').addEventListener('change', e => {
+  getActiveBlob().blendMode = e.target.value;
+  renderAll();
+});
+
+
+// ------------------------
+// Core Logic Listeners
+// ------------------------
+
+document.getElementById('fill-type-select').addEventListener('change', e => {
+  getActiveBlob().fillMode = e.target.value;
+  syncAllUI();
+  renderAll();
+});
+
+document.getElementById('solid-color').addEventListener('input', e => { 
+  getActiveBlob().solidColor = e.target.value; 
+  document.getElementById('solid-hex').value = e.target.value; 
+  renderAll(); 
+});
+document.getElementById('solid-hex').addEventListener('change', e => {
+  let val = e.target.value;
+  if(!val.startsWith('#')) val = '#' + val;
+  if(/^#([0-9A-F]{3}){1,6}$/i.test(val)) {
+    getActiveBlob().solidColor = val;
+    document.getElementById('solid-color').value = val;
+    renderAll();
+  } else {
+    e.target.value = getActiveBlob().solidColor;
+  }
+});
+
+document.getElementById('add-stop-btn').addEventListener('click', () => addStop(document.getElementById('stops-container'), renderAll));
+
+document.getElementById('grad-angle').addEventListener('input', e => { 
+  getActiveBlob().gradAngle = e.target.value; 
+  document.getElementById('grad-angle-val').textContent = e.target.value+'°'; 
   renderAll(); 
 });
 
-const gradSpreadInput = document.getElementById('grad-spread');
-gradSpreadInput.addEventListener('input', e => { 
-  state.gradSpread = parseInt(e.target.value); 
-  document.getElementById('grad-spread-val').textContent = state.gradSpread+'%'; 
+document.getElementById('grad-spread').addEventListener('input', e => { 
+  getActiveBlob().gradSpread = parseInt(e.target.value); 
+  document.getElementById('grad-spread-val').textContent = e.target.value+'%'; 
   renderAll(); 
 });
 
-// Base structural changes
-const sizeSlider = document.getElementById('size-slider');
-sizeSlider.addEventListener('input', e => {
+document.getElementById('size-slider').addEventListener('input', e => {
   state.size = parseInt(e.target.value);
   document.getElementById('size-val').textContent = state.size+'px';
   svgEls.blobSvg.style.width = state.size+'px';
   svgEls.blobSvg.style.height = state.size+'px';
 });
 
-const pointsSlider = document.getElementById('points-slider');
-pointsSlider.addEventListener('input', e => {
+document.getElementById('global-blur').addEventListener('input', e => {
+  state.globalBlur = parseInt(e.target.value);
+  document.getElementById('global-blur-val').textContent = state.globalBlur;
+  renderAll();
+});
+
+document.getElementById('global-noise').addEventListener('input', e => {
+  state.globalNoise = parseInt(e.target.value);
+  document.getElementById('global-noise-val').textContent = state.globalNoise + '%';
+  renderAll();
+});
+
+document.getElementById('points-slider').addEventListener('input', e => {
   const newN = parseInt(e.target.value);
+  const blob = getActiveBlob();
   document.getElementById('points-val').textContent = newN;
-  if(newN > state.numPoints) {
-    for(let i=state.numPoints; i<newN; i++) state.radii.push(100);
+  if(newN > blob.numPoints) {
+    for(let i=blob.numPoints; i<newN; i++) blob.radii.push(100);
   } else {
-    state.radii = state.radii.slice(0, newN);
+    blob.radii = blob.radii.slice(0, newN);
   }
-  state.numPoints = newN;
+  blob.numPoints = newN;
   buildRadiiUI(document.getElementById('dynamic-controls'), renderAll);
   renderAll();
 });
 
-const roundnessSlider = document.getElementById('roundness-slider');
-roundnessSlider.addEventListener('input', e => {
-  state.roundness = parseInt(e.target.value);
-  document.getElementById('roundness-val').textContent = state.roundness+'%';
+document.getElementById('roundness-slider').addEventListener('input', e => {
+  getActiveBlob().roundness = parseInt(e.target.value);
+  document.getElementById('roundness-val').textContent = e.target.value+'%';
   renderAll();
 });
 
-const showPointsToggle = document.getElementById('show-points-toggle');
-showPointsToggle.addEventListener('change', e => {
+document.getElementById('show-points-toggle').addEventListener('change', e => {
   state.showPoints = e.target.checked;
   svgEls.pointsGroup.style.opacity = state.showPoints ? '1' : '0';
 });
 
-// Playback Logic
-document.getElementById('play-btn').addEventListener('click', () => {
-    startAnimation(svgEls.blobPath, doRandomize);
-    showToast('Animation Started');
-});
-document.getElementById('stop-btn').addEventListener('click', () => {
+document.getElementById('play-btn').addEventListener('click', (e) => {
+  if (state.animInterval) {
     stopAnimation();
+    e.target.textContent = 'Start';
+    e.target.className = 'btn-primary';
     showToast('Animation Stopped');
+  } else {
+    startAnimation(doRandomizeAll);
+    e.target.textContent = 'Stop';
+    e.target.className = 'btn-secondary';
+    showToast('Animation Started');
+  }
 });
 
-const timingSlider = document.getElementById('timing-slider');
-timingSlider.addEventListener('input', e => {
+document.getElementById('timing-slider').addEventListener('input', e => {
   document.getElementById('timing-val').textContent = e.target.value+'ms';
-  changeTiming(e.target.value, svgEls.blobPath, doRandomize);
+  changeTiming(e.target.value, doRandomizeAll);
 });
-
 document.getElementById('ease-select').addEventListener('change', e => {
   state.animEase = e.target.value;
-  updateTransitions(svgEls.blobPath);
 });
 
 // Actions
@@ -144,59 +257,51 @@ document.getElementById('random-btn').addEventListener('click', () => {
 
 document.getElementById('reset-btn').addEventListener('click', () => {
   stopAnimation();
-  state.numPoints = 8;
-  pointsSlider.value = 8;
-  document.getElementById('points-val').textContent = 8;
+  const playBtn = document.getElementById('play-btn');
+  playBtn.textContent = 'Start';
+  playBtn.className = 'btn-primary';
   
-  state.roundness = 40;
-  roundnessSlider.value = 40;
-  document.getElementById('roundness-val').textContent = '40%';
+  state.blobs = [generateDefaultBlob(1)];
+  state.activeBlobIndex = 0;
+  state.nextBlobId = 2;
+  state.gooeyMerge = false;
+  document.getElementById('gooey-toggle').checked = false;
   
   state.showPoints = false;
-  showPointsToggle.checked = false;
+  document.getElementById('show-points-toggle').checked = false;
   svgEls.pointsGroup.style.opacity = '0';
   
+  state.globalBlur = 0;
+  state.globalNoise = 0;
+  document.getElementById('global-blur').value = 0;
+  document.getElementById('global-blur-val').textContent = '0';
+  document.getElementById('global-noise').value = 0;
+  document.getElementById('global-noise-val').textContent = '0%';
+  
   state.size = 300;
-  sizeSlider.value = 300;
+  document.getElementById('size-slider').value = 300;
   document.getElementById('size-val').textContent = '300px';
   svgEls.blobSvg.style.width = '300px';
   svgEls.blobSvg.style.height = '300px';
   
-  state.fillMode = 'linear';
-  fillTypeSelect.value = 'linear';
-  document.getElementById('solid-controls').style.display = 'none';
-  document.getElementById('gradient-controls').style.display = 'block';
-  document.getElementById('grad-angle-row').style.display = 'flex';
-  
-  state.stops = [
-    { id: 1, color: '#ff0080', offset: 0 },
-    { id: 2, color: '#7928ca', offset: 100 }
-  ];
-  state.nextStopId = 3;
-  buildStopsUI(stopsContainer, renderAll);
-
   initRadii();
-  buildRadiiUI(document.getElementById('dynamic-controls'), renderAll);
+  renderLayersUI();
+  syncAllUI();
   renderAll();
   showToast('Reset to Default');
 });
 
-// Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-  if (e.key.toLowerCase() === 'c') {
-    document.getElementById('copy-btn').click();
-  } else if (e.key.toLowerCase() === 'r') {
-    document.getElementById('reset-btn').click();
-  } else if (e.key === ' ' || e.key.toLowerCase() === 'g') {
+  if (e.key.toLowerCase() === 'c') document.getElementById('copy-btn').click();
+  else if (e.key.toLowerCase() === 'r') document.getElementById('reset-btn').click();
+  else if (e.key === ' ' || e.key.toLowerCase() === 'g') {
     e.preventDefault();
     document.getElementById('random-btn').click();
   }
 });
 
-// Boot seq
 initRadii();
-buildStopsUI(stopsContainer, renderAll);
-buildRadiiUI(document.getElementById('dynamic-controls'), renderAll);
-updateTransitions(svgEls.blobPath);
+renderLayersUI();
+syncAllUI();
 renderAll();

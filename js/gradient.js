@@ -1,45 +1,82 @@
-import { state } from './state.js';
 
-function getPrimaryColor() {
-  return state.stops.length > 0 ? state.stops[0].color : state.solidColor;
+function getPrimaryColor(blob) {
+  return blob.stops.length > 0 ? blob.stops[0].color : blob.solidColor;
 }
 
-export function updateGradientSVG(svgEls) {
-  // Update structural SVGs inner stops natively
-  let stopsMarkup = state.stops.map(s => `<stop offset="${s.offset}%" stop-color="${s.color}" />`).join('');
+function updateGradientSVG(svgEls) {
+  let defsMarkup = '';
   
-  svgEls.blobGradLin.innerHTML = stopsMarkup;
-  svgEls.blobGradRad.innerHTML = stopsMarkup;
+  if (state.gooeyMerge) {
+    defsMarkup += `
+      <filter id="gooey" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="15" result="blur" />
+        <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 25 -10" result="gooey" />
+        <feComposite in="SourceGraphic" in2="gooey" operator="atop"/>
+      </filter>
+    `;
+  }
 
-  const rad = state.gradAngle * (Math.PI / 180);
-  const R = 50 * (state.gradSpread / 100);
-  const x1 = Math.round(50 - Math.cos(rad) * R) + '%';
-  const y1 = Math.round(50 - Math.sin(rad) * R) + '%';
-  const x2 = Math.round(50 + Math.cos(rad) * R) + '%';
-  const y2 = Math.round(50 + Math.sin(rad) * R) + '%';
+  if (state.globalBlur > 0 || state.globalNoise > 0) {
+    let blurStr = '';
+    let noiseStr = '';
+    let currentIn = 'SourceGraphic';
+
+    if (state.globalBlur > 0) {
+      blurStr = `<feGaussianBlur in="${currentIn}" stdDeviation="${state.globalBlur}" result="blurOut" />`;
+      currentIn = 'blurOut';
+    }
+
+    if (state.globalNoise > 0) {
+      const opacity = state.globalNoise / 100;
+      noiseStr = `
+        <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" result="noise" />
+        <feColorMatrix in="noise" type="matrix" values="0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0 0 0 ${opacity} 0" result="monoNoise" />
+        <feBlend mode="overlay" in="monoNoise" in2="${currentIn}" result="blendOut" />
+        <feComposite operator="in" in="blendOut" in2="${currentIn}" result="noiseOut" />
+      `;
+      currentIn = 'noiseOut';
+    }
+    
+    defsMarkup += `
+      <filter id="post-process" x="-50%" y="-50%" width="200%" height="200%">
+        ${blurStr}
+        ${noiseStr}
+      </filter>
+    `;
+  }
+
+  state.blobs.forEach(blob => {
+    const stopsMarkup = blob.stops.map(s => `<stop offset="${s.offset}%" stop-color="${s.color}" />`).join('');
+    
+    const rad = blob.gradAngle * (Math.PI / 180);
+    const R = 50 * (blob.gradSpread / 100);
+    const x1 = Math.round(50 - Math.cos(rad) * R) + '%';
+    const y1 = Math.round(50 - Math.sin(rad) * R) + '%';
+    const x2 = Math.round(50 + Math.cos(rad) * R) + '%';
+    const y2 = Math.round(50 + Math.sin(rad) * R) + '%';
+    
+    defsMarkup += `
+      <linearGradient id="blob-grad-linear-${blob.id}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}">
+        ${stopsMarkup}
+      </linearGradient>
+      <radialGradient id="blob-grad-radial-${blob.id}" cx="50%" cy="50%" r="${R}%">
+        ${stopsMarkup}
+      </radialGradient>
+    `;
+  });
+
+  svgEls.defsGroup.innerHTML = defsMarkup;
   
-  svgEls.blobGradLin.setAttribute('x1', x1);
-  svgEls.blobGradLin.setAttribute('y1', y1);
-  svgEls.blobGradLin.setAttribute('x2', x2);
-  svgEls.blobGradLin.setAttribute('y2', y2);
-  svgEls.blobGradRad.setAttribute('r', R + '%');
-
-  // mode
-  if (state.fillMode === 'solid') {
-    svgEls.blobPath.setAttribute('fill', state.solidColor);
-    svgEls.blobSvg.style.filter = `drop-shadow(0 0 40px ${state.solidColor}50)`;
-  } else if (state.fillMode === 'linear') {
-    svgEls.blobPath.setAttribute('fill', 'url(#blob-grad-linear)');
-    svgEls.blobSvg.style.filter = `drop-shadow(0 0 40px ${getPrimaryColor()}50)`;
-  } else if (state.fillMode === 'radial') {
-    svgEls.blobPath.setAttribute('fill', 'url(#blob-grad-radial)');
-    svgEls.blobSvg.style.filter = `drop-shadow(0 0 40px ${getPrimaryColor()}50)`;
+  if (state.blobs.length > 0) {
+      const activeColor = getPrimaryColor(getActiveBlob());
+      svgEls.blobSvg.style.filter = `drop-shadow(0 0 40px ${activeColor}50)`;
   }
 }
 
-export function buildStopsUI(container, onChangeCallback) {
+function buildStopsUI(container, onChangeCallback) {
+  const blob = getActiveBlob();
   container.innerHTML = '';
-  state.stops.forEach((stop) => {
+  blob.stops.forEach((stop) => {
     const row = document.createElement('div');
     row.className = 'stop-row';
 
@@ -67,11 +104,9 @@ export function buildStopsUI(container, onChangeCallback) {
     offsetInput.max = '100';
     offsetInput.value = stop.offset;
 
-    // Events
     const syncColor = (val) => {
       if(!val.startsWith('#')) val = '#' + val;
-      const regex = /^#([0-9A-F]{3}){1,6}$/i;
-      if(regex.test(val)) {
+      if(/^#([0-9A-F]{3}){1,6}$/i.test(val)) {
         stop.color = val;
         colorPicker.value = val;
         hexInput.value = val;
@@ -96,13 +131,13 @@ export function buildStopsUI(container, onChangeCallback) {
     row.appendChild(colorWrap);
     row.appendChild(offsetInput);
 
-    if (state.stops.length > 2) {
+    if (blob.stops.length > 2) {
       const rmBtn = document.createElement('button');
       rmBtn.className = 'btn-reset';
       rmBtn.style.padding = '0 0.5rem';
       rmBtn.textContent = '✖';
       rmBtn.addEventListener('click', () => {
-        state.stops = state.stops.filter(s => s.id !== stop.id);
+        blob.stops = blob.stops.filter(s => s.id !== stop.id);
         buildStopsUI(container, onChangeCallback);
         onChangeCallback();
       });
@@ -117,8 +152,9 @@ export function buildStopsUI(container, onChangeCallback) {
   });
 }
 
-export function addStop(container, onChangeCallback) {
-  state.stops.push({ id: state.nextStopId++, color: '#ffffff', offset: 50 });
+function addStop(container, onChangeCallback) {
+  const blob = getActiveBlob();
+  blob.stops.push({ id: blob.nextStopId++, color: '#ffffff', offset: 50 });
   buildStopsUI(container, onChangeCallback);
   onChangeCallback();
 }

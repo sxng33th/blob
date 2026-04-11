@@ -1,28 +1,20 @@
-import { state } from './state.js';
 
-export function updateTransitions(blobPath) {
-  blobPath.style.transition = `d ${state.animTiming}ms ${state.animEase}, fill 0.2s ease`;
-}
-
-export function startAnimation(blobPath, randomShapeCallback) {
+function startAnimation(randomShapeCallback) {
   if (state.animInterval) clearInterval(state.animInterval);
-  updateTransitions(blobPath);
-  randomShapeCallback(); // trigger first jump sync
+  randomShapeCallback(); 
   state.animInterval = setInterval(randomShapeCallback, state.animTiming);
 }
 
-export function stopAnimation() {
+function stopAnimation() {
   if (state.animInterval) {
     clearInterval(state.animInterval);
     state.animInterval = null;
   }
 }
 
-export function changeTiming(timing, blobPath, randomShapeCallback) {
+function changeTiming(timing, randomShapeCallback) {
   state.animTiming = parseInt(timing);
   if (state.animInterval) {
-    startAnimation(blobPath, randomShapeCallback);
-  } else {
-    updateTransitions(blobPath);
+    startAnimation(randomShapeCallback);
   }
 }
