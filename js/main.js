@@ -279,6 +279,14 @@ document.getElementById('copy-anim-btn').addEventListener('click', () => {
   }
 });
 
+document.getElementById('preview-anim-btn').addEventListener('click', () => {
+  const svgText = generateAnimatedSVGMarkup(svgEls);
+  const blob = new Blob([svgText], {type: 'image/svg+xml'});
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+  setTimeout(() => URL.revokeObjectURL(url), 60000); 
+});
+
 function fallbackCopy(text) {
   const textArea = document.createElement("textarea");
   textArea.value = text;

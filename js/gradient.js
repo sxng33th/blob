@@ -11,7 +11,6 @@ function updateGradientSVG(svgEls) {
       <filter id="gooey" x="-50%" y="-50%" width="200%" height="200%">
         <feGaussianBlur in="SourceGraphic" stdDeviation="15" result="blur" />
         <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 25 -10" result="gooey" />
-        <feComposite in="SourceGraphic" in2="gooey" operator="atop"/>
       </filter>
     `;
   }

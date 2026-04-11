@@ -7,6 +7,23 @@ function generateSVGMarkup(svgEls) {
     defsMarkup += `    <filter id="gooey" x="-50%" y="-50%" width="200%" height="200%">\n      <feGaussianBlur in="SourceGraphic" stdDeviation="15" result="blur" />\n      <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 25 -10" result="gooey" />\n      <feComposite in="SourceGraphic" in2="gooey" operator="atop"/>\n    </filter>\n`;
   }
 
+  if (state.globalBlur > 0 || state.globalNoise > 0) {
+    let blurStr = '';
+    let noiseStr = '';
+    let currentIn = 'SourceGraphic';
+
+    if (state.globalBlur > 0) {
+      blurStr = `      <feGaussianBlur in="${currentIn}" stdDeviation="${state.globalBlur}" result="blurOut" />\n`;
+      currentIn = 'blurOut';
+    }
+    if (state.globalNoise > 0) {
+      const op = state.globalNoise / 100;
+      noiseStr = `      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" result="noise" />\n      <feColorMatrix in="noise" type="matrix" values="0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0 0 0 ${op} 0" result="monoNoise" />\n      <feBlend mode="overlay" in="monoNoise" in2="${currentIn}" result="blendOut" />\n      <feComposite operator="in" in="blendOut" in2="${currentIn}" result="noiseOut" />\n`;
+      currentIn = 'noiseOut';
+    }
+    defsMarkup += `    <filter id="post-process" x="-50%" y="-50%" width="200%" height="200%">\n${blurStr}${noiseStr}    </filter>\n`;
+  }
+
   state.blobs.forEach(blob => {
     const stopsMarkup = blob.stops.map(s => `      <stop offset="${s.offset}%" stop-color="${s.color}" />`).join('\n');
     
@@ -45,7 +62,7 @@ function generateSVGMarkup(svgEls) {
 
   let activeFilter = state.gooeyMerge ? ' filter="url(#gooey)"' : '';
 
-  return `<svg width="${maxSize}" height="${maxSize}" viewBox="-110 -110 220 220" xmlns="http://www.w3.org/2000/svg">\n  <defs>\n${defsMarkup}  </defs>\n${postProcStart}  <g id="blobs-group"${activeFilter}>\n${pathMarkup}\n  </g>\n${postProcEnd}</svg>`;
+  return `<svg width="${maxSize}" height="${maxSize}" viewBox="-110 -110 220 220" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">\n  <defs>\n${defsMarkup}  </defs>\n${postProcStart}  <g id="blobs-group"${activeFilter}>\n${pathMarkup}\n  </g>\n${postProcEnd}</svg>`;
 }
 
 function generateAnimatedSVGMarkup(svgEls) {
@@ -76,7 +93,24 @@ function generateAnimatedSVGMarkup(svgEls) {
   let defsMarkup = '';
   
   if (state.gooeyMerge) {
-    defsMarkup += `    <filter id="gooey" x="-50%" y="-50%" width="200%" height="200%">\n      <feGaussianBlur in="SourceGraphic" stdDeviation="15" result="blur" />\n      <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 25 -10" result="gooey" />\n      <feComposite in="SourceGraphic" in2="gooey" operator="atop"/>\n    </filter>\n`;
+    defsMarkup += `    <filter id="gooey" x="-50%" y="-50%" width="200%" height="200%">\n      <feGaussianBlur in="SourceGraphic" stdDeviation="15" result="blur" />\n      <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 25 -10" result="gooey" />\n    </filter>\n`;
+  }
+
+  if (state.globalBlur > 0 || state.globalNoise > 0) {
+    let blurStr = '';
+    let noiseStr = '';
+    let currentIn = 'SourceGraphic';
+
+    if (state.globalBlur > 0) {
+      blurStr = `      <feGaussianBlur in="${currentIn}" stdDeviation="${state.globalBlur}" result="blurOut" />\n`;
+      currentIn = 'blurOut';
+    }
+    if (state.globalNoise > 0) {
+      const op = state.globalNoise / 100;
+      noiseStr = `      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" result="noise" />\n      <feColorMatrix in="noise" type="matrix" values="0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0 0 0 ${op} 0" result="monoNoise" />\n      <feBlend mode="overlay" in="monoNoise" in2="${currentIn}" result="blendOut" />\n      <feComposite operator="in" in="blendOut" in2="${currentIn}" result="noiseOut" />\n`;
+      currentIn = 'noiseOut';
+    }
+    defsMarkup += `    <filter id="post-process" x="-50%" y="-50%" width="200%" height="200%">\n${blurStr}${noiseStr}    </filter>\n`;
   }
 
   const loopDur = (state.animTiming * frames) / 1000; // in seconds
@@ -85,8 +119,8 @@ function generateAnimatedSVGMarkup(svgEls) {
     let rotAnimStr = '';
     if (state.gradRotate) {
         // rotation duration relative to speed. e.g. speed 50 = 100 deg/sec = 3.6s per full loop
-        const secPerRot = 360 / (state.gradRotSpeed * 2);
-        rotAnimStr = `      <animateTransform attributeName="gradientTransform" type="rotate" from="0 50 50" to="360 50 50" dur="${secPerRot.toFixed(2)}s" repeatCount="indefinite" />\n`;
+        const secPerRot = 360 / (Math.max(1, state.gradRotSpeed) * 2);
+        rotAnimStr = `      <animateTransform attributeName="gradientTransform" type="rotate" from="0 0.5 0.5" to="360 0.5 0.5" dur="${secPerRot.toFixed(2)}s" repeatCount="indefinite" />\n`;
     }
 
     const stopsMarkup = blob.stops.map(s => `      <stop offset="${s.offset}%" stop-color="${s.color}" />`).join('\n');
@@ -129,7 +163,7 @@ function generateAnimatedSVGMarkup(svgEls) {
   }
   let activeFilter = state.gooeyMerge ? ' filter="url(#gooey)"' : '';
 
-  return `<svg width="${maxSize}" height="${maxSize}" viewBox="-110 -110 220 220" xmlns="http://www.w3.org/2000/svg">\n  <defs>\n${defsMarkup}  </defs>\n${postProcStart}  <g id="blobs-group"${activeFilter}>\n${pathMarkup}\n  </g>\n${postProcEnd}</svg>`;
+  return `<svg width="${maxSize}" height="${maxSize}" viewBox="-110 -110 220 220" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">\n  <defs>\n${defsMarkup}  </defs>\n${postProcStart}  <g id="blobs-group"${activeFilter}>\n${pathMarkup}\n  </g>\n${postProcEnd}</svg>`;
 }
 
 function showToast(msg) {
