@@ -146,9 +146,13 @@ function buildRadiiUI(container, onChangeCallback) {
 
 function syncRadiiUI(container) {
   const blob = getActiveBlob();
-  const inputs = container.querySelectorAll('input[type="range"]');
-  inputs.forEach((input, i) => {
-    input.value = blob.radii[i];
-    input.nextElementSibling.textContent = blob.radii[i];
-  });
+  const rows = container.children;
+  for(let i=0; i<blob.numPoints; i++) {
+    if (i < rows.length) {
+      const input = rows[i].children[1];
+      const valSpan = rows[i].children[2];
+      input.value = blob.radii[i];
+      valSpan.textContent = blob.radii[i];
+    }
+  }
 }
