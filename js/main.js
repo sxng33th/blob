@@ -26,14 +26,12 @@ function renderAll() {
 
 function doRandomize() {
   randomizeRadii(false);
-  syncRadiiUI(document.getElementById('dynamic-controls'));
-  renderAll();
+  updateBlobSVG(svgEls);
 }
 
 function doRandomizeAll() {
   randomizeRadii(true);
-  syncRadiiUI(document.getElementById('dynamic-controls'));
-  renderAll();
+  updateBlobSVG(svgEls);
 }
 
 // ------------------------
@@ -57,13 +55,15 @@ function syncAllUI() {
 
   document.getElementById('blend-mode-select').value = blob.blendMode;
 
+  document.getElementById('size-slider').value = blob.size || 300;
+  document.getElementById('size-val').textContent = (blob.size || 300)+'px';
+
   document.getElementById('points-slider').value = blob.numPoints;
   document.getElementById('points-val').textContent = blob.numPoints;
   document.getElementById('roundness-slider').value = blob.roundness;
   document.getElementById('roundness-val').textContent = blob.roundness+'%';
   
   buildStopsUI(document.getElementById('stops-container'), renderAll);
-  buildRadiiUI(document.getElementById('dynamic-controls'), renderAll);
 }
 
 // ------------------------
@@ -178,10 +178,9 @@ document.getElementById('grad-spread').addEventListener('input', e => {
 });
 
 document.getElementById('size-slider').addEventListener('input', e => {
-  state.size = parseInt(e.target.value);
-  document.getElementById('size-val').textContent = state.size+'px';
-  svgEls.blobSvg.style.width = state.size+'px';
-  svgEls.blobSvg.style.height = state.size+'px';
+  getActiveBlob().size = parseInt(e.target.value);
+  document.getElementById('size-val').textContent = getActiveBlob().size+'px';
+  renderAll();
 });
 
 document.getElementById('global-blur').addEventListener('input', e => {
@@ -206,7 +205,6 @@ document.getElementById('points-slider').addEventListener('input', e => {
     blob.radii = blob.radii.slice(0, newN);
   }
   blob.numPoints = newN;
-  buildRadiiUI(document.getElementById('dynamic-controls'), renderAll);
   renderAll();
 });
 
@@ -235,6 +233,19 @@ document.getElementById('play-btn').addEventListener('click', (e) => {
   }
 });
 
+document.getElementById('grad-rotate-toggle').addEventListener('change', e => {
+  state.gradRotate = e.target.checked;
+  if (state.animInterval) {
+    stopAnimation();
+    startAnimation(doRandomizeAll);
+  }
+});
+
+document.getElementById('grad-rotate-speed').addEventListener('input', e => {
+  state.gradRotSpeed = parseInt(e.target.value);
+  document.getElementById('grad-rotate-speed-val').textContent = state.gradRotSpeed;
+});
+
 document.getElementById('timing-slider').addEventListener('input', e => {
   document.getElementById('timing-val').textContent = e.target.value+'ms';
   changeTiming(e.target.value, doRandomizeAll);
@@ -245,10 +256,54 @@ document.getElementById('ease-select').addEventListener('change', e => {
 
 // Actions
 document.getElementById('copy-btn').addEventListener('click', () => {
-  navigator.clipboard.writeText(generateSVGMarkup(svgEls)).then(() => {
-    showToast('SVG Copied!');
-  }).catch(() => showToast('Copy Failed'));
+  const svgText = generateSVGMarkup(svgEls);
+  
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(svgText).then(() => {
+      showToast('SVG Copied!');
+    }).catch(() => fallbackCopy(svgText));
+  } else {
+    fallbackCopy(svgText);
+  }
 });
+
+document.getElementById('copy-anim-btn').addEventListener('click', () => {
+  const svgText = generateAnimatedSVGMarkup(svgEls);
+  
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(svgText).then(() => {
+      showToast('Animated SVG Copied!');
+    }).catch(() => fallbackCopy(svgText));
+  } else {
+    fallbackCopy(svgText);
+  }
+});
+
+document.getElementById('preview-anim-btn').addEventListener('click', () => {
+  const svgText = generateAnimatedSVGMarkup(svgEls);
+  const blob = new Blob([svgText], {type: 'image/svg+xml'});
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+  setTimeout(() => URL.revokeObjectURL(url), 60000); 
+});
+
+function fallbackCopy(text) {
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  textArea.style.position = "fixed";
+  textArea.style.top = "-999999px";
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  
+  try {
+    document.execCommand('copy');
+    showToast('SVG Copied!');
+  } catch (err) {
+    showToast('Copy Failed');
+  }
+  document.body.removeChild(textArea);
+}
 
 document.getElementById('random-btn').addEventListener('click', () => {
   doRandomize();
@@ -278,11 +333,11 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   document.getElementById('global-noise').value = 0;
   document.getElementById('global-noise-val').textContent = '0%';
   
-  state.size = 300;
-  document.getElementById('size-slider').value = 300;
-  document.getElementById('size-val').textContent = '300px';
-  svgEls.blobSvg.style.width = '300px';
-  svgEls.blobSvg.style.height = '300px';
+  state.gradRotate = false;
+  document.getElementById('grad-rotate-toggle').checked = false;
+  state.gradRotSpeed = 50;
+  document.getElementById('grad-rotate-speed').value = 50;
+  document.getElementById('grad-rotate-speed-val').textContent = '50';
   
   initRadii();
   renderLayersUI();
@@ -305,3 +360,45 @@ initRadii();
 renderLayersUI();
 syncAllUI();
 renderAll();
+
+let activeDragPointIndex = null;
+
+svgEls.pointsGroup.addEventListener('pointerdown', (e) => {
+  if (e.target.tagName === 'circle') {
+    const circles = Array.from(svgEls.pointsGroup.children);
+    activeDragPointIndex = circles.indexOf(e.target);
+    if(activeDragPointIndex !== -1) {
+      state.isDraggingPoint = true;
+      svgEls.blobSvg.setPointerCapture(e.pointerId);
+      updateBlobSVG(svgEls);
+    }
+  }
+});
+
+svgEls.blobSvg.addEventListener('pointermove', (e) => {
+  if (state.isDraggingPoint && activeDragPointIndex !== null) {
+      const pt = svgEls.blobSvg.createSVGPoint();
+      pt.x = e.clientX;
+      pt.y = e.clientY;
+      const svgPt = pt.matrixTransform(svgEls.blobSvg.getScreenCTM().inverse());
+      const dist = Math.sqrt(svgPt.x * svgPt.x + svgPt.y * svgPt.y);
+      
+      const maxSize = Math.max(...state.blobs.map(b => b.size || 300));
+      const activeBlob = getActiveBlob();
+      const activeScale = (activeBlob.size || 300) / maxSize;
+      
+      const newRadius = Math.max(10, Math.min(100, Math.round(dist / activeScale)));
+      activeBlob.radii[activeDragPointIndex] = newRadius;
+      
+      updateBlobSVG(svgEls);
+  }
+});
+
+svgEls.blobSvg.addEventListener('pointerup', (e) => {
+  if (state.isDraggingPoint) {
+     state.isDraggingPoint = false;
+     activeDragPointIndex = null;
+     svgEls.blobSvg.releasePointerCapture(e.pointerId);
+     updateBlobSVG(svgEls);
+  }
+});

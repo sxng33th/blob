@@ -1,7 +1,7 @@
 
 function initRadii() {
   const blob = getActiveBlob();
-  blob.radii = Array(blob.numPoints).fill(100);
+  blob.radii = Array(blob.numPoints).fill(75);
 }
 
 function randomizeRadii(allLayers = false) {
@@ -59,6 +59,11 @@ function generatePath(blob) {
 
 let pointCircles = [];
 function updateBlobSVG(svgEls) {
+  const maxSize = Math.max(...state.blobs.map(b => b.size || 300));
+  
+  svgEls.blobSvg.style.width = maxSize + 'px';
+  svgEls.blobSvg.style.height = maxSize + 'px';
+
   while(svgEls.blobsGroup.children.length > state.blobs.length) {
     svgEls.blobsGroup.removeChild(svgEls.blobsGroup.lastChild);
   }
@@ -71,6 +76,9 @@ function updateBlobSVG(svgEls) {
     const path = svgEls.blobsGroup.children[idx];
     path.setAttribute('d', generatePath(blob));
     
+    const scale = (blob.size || 300) / maxSize;
+    path.setAttribute('transform', `scale(${scale})`);
+    
     if (blob.fillMode === 'solid') {
       path.setAttribute('fill', blob.solidColor);
     } else if (blob.fillMode === 'linear') {
@@ -80,7 +88,8 @@ function updateBlobSVG(svgEls) {
     }
     
     path.style.mixBlendMode = blob.blendMode;
-    path.style.transition = `d ${state.animTiming}ms ${state.animEase}, fill 0.2s ease`;
+    const easeActive = (state.isDraggingPoint && idx === state.activeBlobIndex) ? 'none' : `d ${state.animTiming}ms ${state.animEase}, fill 0.2s ease`;
+    path.style.transition = easeActive;
   });
 
   const activeBlob = getActiveBlob();
@@ -88,71 +97,34 @@ function updateBlobSVG(svgEls) {
   const duration = state.animTiming;
   const ease = state.animEase;
 
+  const activeScale = (activeBlob.size || 300) / maxSize;
+  svgEls.pointsGroup.setAttribute('transform', `scale(${activeScale})`);
+
   if (pointCircles.length !== activeBlob.numPoints) {
     svgEls.pointsGroup.innerHTML = '';
     pointCircles = [];
     for(let i=0; i<activeBlob.numPoints; i++) {
       const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      circle.setAttribute('r', '4');
+      circle.setAttribute('r', '6');
       circle.setAttribute('fill', '#050505');
       circle.setAttribute('stroke', '#ffffff');
-      circle.setAttribute('stroke-width', '1.5');
+      circle.setAttribute('stroke-width', '2');
+      circle.style.cursor = 'grab';
       svgEls.pointsGroup.appendChild(circle);
       pointCircles.push(circle);
     }
   }
   
   for(let i=0; i<activeBlob.numPoints; i++) {
-    pointCircles[i].style.transition = `cx ${duration}ms ${ease}, cy ${duration}ms ${ease}`;
+    const easeCircle = state.isDraggingPoint ? 'none' : `cx ${duration}ms ${ease}, cy ${duration}ms ${ease}`;
+    if (state.isDraggingPoint) {
+      pointCircles[i].style.cursor = 'grabbing';
+    } else {
+      pointCircles[i].style.cursor = 'grab';
+    }
+    pointCircles[i].style.transition = easeCircle;
     pointCircles[i].setAttribute('cx', pts[i].x);
     pointCircles[i].setAttribute('cy', pts[i].y);
   }
 }
 
-function buildRadiiUI(container, onChangeCallback) {
-  const blob = getActiveBlob();
-  container.innerHTML = '';
-  for(let i=0; i<blob.numPoints; i++) {
-    const row = document.createElement('div');
-    row.className = 'input-row';
-    
-    const label = document.createElement('span');
-    label.className = 'label';
-    label.textContent = `Point ${i+1}`;
-    
-    const input = document.createElement('input');
-    input.type = 'range';
-    input.min = '10';
-    input.max = '100';
-    input.value = blob.radii[i];
-    
-    const valSpan = document.createElement('span');
-    valSpan.className = 'value';
-    valSpan.style.width = '35px';
-    valSpan.textContent = blob.radii[i];
-
-    input.addEventListener('input', (e) => {
-      blob.radii[i] = parseInt(e.target.value);
-      valSpan.textContent = blob.radii[i];
-      onChangeCallback();
-    });
-
-    row.appendChild(label);
-    row.appendChild(input);
-    row.appendChild(valSpan);
-    container.appendChild(row);
-  }
-}
-
-function syncRadiiUI(container) {
-  const blob = getActiveBlob();
-  const rows = container.children;
-  for(let i=0; i<blob.numPoints; i++) {
-    if (i < rows.length) {
-      const input = rows[i].children[1];
-      const valSpan = rows[i].children[2];
-      input.value = blob.radii[i];
-      valSpan.textContent = blob.radii[i];
-    }
-  }
-}

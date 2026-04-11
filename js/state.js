@@ -3,7 +3,7 @@ function generateDefaultBlob(id) {
     id: id,
     name: `Blob ${id}`,
     numPoints: 8,
-    radii: Array(8).fill(100),
+    radii: Array(8).fill(75),
     roundness: 40,
     size: 300,
     fillMode: 'linear',
@@ -25,9 +25,12 @@ const state = {
   nextBlobId: 2,
   
   showPoints: false,
+  isDraggingPoint: false,
   animInterval: null,
   animTiming: 500,
   animEase: 'ease-out',
+  gradRotate: false,
+  gradRotSpeed: 50,
   gooeyMerge: false,
   globalBlur: 0,
   globalNoise: 0
