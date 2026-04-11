@@ -15,14 +15,45 @@
     </div>
     
     <details class="control-group" open>
-      <summary class="section-header">APPEARANCE</summary>
-      <div class="color-input">
-        <span class="label">Fill</span>
-        <div class="color-with-hex">
-            <input type="color" id="fill-color" value="#ffffff">
-            <input type="text" class="hex-input" id="fill-hex" value="#ffffff">
-        </div>
+      <summary class="section-header">FILL AND APPEARANCE</summary>
+      
+      <div class="input-row select-row" style="margin-top: 0.5rem; margin-bottom: 1.5rem;">
+          <span class="label">Fill Mode</span>
+          <select id="fill-type-select" class="custom-select" style="width: 140px;">
+            <option value="solid">Solid</option>
+            <option value="linear" selected>Linear Gradient</option>
+            <option value="radial">Radial Gradient</option>
+          </select>
       </div>
+
+      <div id="solid-controls" style="display: none; margin-bottom: 1.5rem;">
+          <div class="color-input">
+            <span class="label">Color</span>
+            <div class="color-with-hex">
+                <input type="color" id="solid-color" value="#ff0080">
+                <input type="text" class="hex-input" id="solid-hex" value="#ff0080">
+            </div>
+          </div>
+      </div>
+
+      <div id="gradient-controls" style="margin-bottom: 1.5rem;">
+          <div id="stops-container">
+            <!-- Dynamic rows injected here -->
+          </div>
+          <button class="btn-secondary" id="add-stop-btn" style="width: 100%; border-style: dashed; margin-top: 0.5rem; border-color: var(--border);">+ Add Stop</button>
+          
+          <div class="input-row" style="margin-top: 1.5rem;" id="grad-angle-row">
+              <span class="label">Angle</span>
+              <input type="range" id="grad-angle" min="0" max="360" value="45">
+              <span class="value" id="grad-angle-val">45°</span>
+          </div>
+          <div class="input-row" style="margin-top: 0.5rem;" id="grad-spread-row">
+              <span class="label">Spread</span>
+              <input type="range" id="grad-spread" min="10" max="150" value="100">
+              <span class="value" id="grad-spread-val">100%</span>
+          </div>
+      </div>
+      <div style="border-top: 1px solid var(--border); margin-top: 1rem; margin-bottom: 1rem;"></div>
       <div class="input-row" style="margin-top: 1rem;">
           <span class="label">Size</span>
           <input type="range" id="size-slider" min="100" max="600" value="300">
@@ -64,7 +95,17 @@
   <main class="canvas-area">
     <div class="blob-container">
       <svg id="blob-svg" viewBox="-110 -110 220 220" xmlns="http://www.w3.org/2000/svg">
-        <path id="blob-path" d="" fill="#ffffff" />
+        <defs>
+          <linearGradient id="blob-grad-linear" x1="14%" y1="14%" x2="85%" y2="85%">
+            <stop id="lin-stop-1" offset="0%" stop-color="#ff0080" />
+            <stop id="lin-stop-2" offset="100%" stop-color="#7928ca" />
+          </linearGradient>
+          <radialGradient id="blob-grad-radial" cx="50%" cy="50%" r="50%">
+            <stop id="rad-stop-1" offset="0%" stop-color="#ff0080" />
+            <stop id="rad-stop-2" offset="100%" stop-color="#7928ca" />
+          </radialGradient>
+        </defs>
+        <path id="blob-path" d="" fill="url(#blob-grad-linear)" />
         <g id="points-group" style="opacity: 0; transition: opacity 0.2s ease;"></g>
       </svg>
     </div>
@@ -107,6 +148,6 @@
 
 <div id="toast" class="toast">SVG Copied!</div>
 
-<script src="script.js"></script>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>

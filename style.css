@@ -505,6 +505,29 @@ button {
   opacity: 1;
 }
 
+/* Gradient Stop Rows */
+.stop-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.offset-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  width: 50px;
+  padding: 0.25rem;
+  border-radius: 4px;
+  text-align: center;
+}
+.offset-input:focus {
+  border-color: var(--border-hover);
+  outline: none;
+}
+
 /* Mobile Breakpoint */
 @media (max-width: 900px) {
   body {
