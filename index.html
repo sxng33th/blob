@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blob Generator - Pro</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1>BLOB GENERATOR</h1>
+    </div>
+    
+    <section class="control-group">
+      <label class="section-header">APPEARANCE</label>
+      <div class="color-input">
+        <span class="label">Fill</span>
+        <div class="color-with-hex">
+            <input type="color" id="fill-color" value="#ffffff">
+            <input type="text" class="hex-input" id="fill-hex" value="#ffffff">
+        </div>
+      </div>
+      <div class="input-row" style="margin-top: 1rem;">
+          <span class="label">Size</span>
+          <input type="range" id="size-slider" min="100" max="600" value="300">
+          <span class="value" id="size-val">300px</span>
+      </div>
+      <div class="input-row">
+          <span class="label">Points</span>
+          <input type="range" id="points-slider" min="3" max="30" value="8">
+          <span class="value" id="points-val">8</span>
+      </div>
+      <div class="toggle-row" style="margin-top: 1rem;">
+        <span class="label">Show Points</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="show-points-toggle">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="control-group">
+      <label class="section-header">SHAPE CONTROL (RADII)</label>
+      <div id="dynamic-controls">
+         <!-- Sliders populated dynamically -->
+      </div>
+    </section>
+
+    <section class="action-group">
+      <button class="btn-primary" id="copy-btn">Copy SVG</button>
+      <button class="btn-secondary" id="random-btn">Random Shape</button>
+      <button class="btn-reset" id="reset-btn">Reset to Default</button>
+    </section>
+  </aside>
+
+  <main class="canvas-area">
+    <div class="blob-container">
+      <svg id="blob-svg" viewBox="-110 -110 220 220" xmlns="http://www.w3.org/2000/svg">
+        <path id="blob-path" d="" fill="#ffffff" />
+        <g id="points-group" style="opacity: 0; transition: opacity 0.2s ease;"></g>
+      </svg>
+    </div>
+    <button class="help-btn" data-tooltip="Keyboard Shortcuts:&#xa;C  - Copy SVG&#xa;Space - Random Shape&#xa;R  - Reset">?</button>
+  </main>
+  
+  <aside class="sidebar right-sidebar">
+    <div class="sidebar-header">
+      <h1>ANIMATE PANEL</h1>
+    </div>
+    
+    <section class="control-group">
+      <label class="section-header">PLAYBACK</label>
+      <div class="input-row" style="margin-bottom: 1.5rem;">
+        <button class="btn-primary" id="play-btn" style="width: 48%;">Start</button>
+        <button class="btn-secondary" id="stop-btn" style="width: 48%;">Stop</button>
+      </div>
+      
+      <div class="input-row" style="margin-bottom: 1rem;">
+          <span class="label">Timing</span>
+          <input type="range" id="timing-slider" min="100" max="2500" step="50" value="500">
+          <span class="value" id="timing-val">500ms</span>
+      </div>
+      
+      <div class="input-row">
+          <span class="label">Easing</span>
+          <!-- Added full padding right drop down caret base64 in css -->
+          <select id="ease-select" class="custom-select">
+            <option value="linear">Linear</option>
+            <option value="ease">Ease</option>
+            <option value="ease-in">Ease In</option>
+            <option value="ease-out" selected>Ease Out</option>
+            <option value="ease-in-out">Ease In/Out</option>
+            <option value="cubic-bezier(0.68, -0.55, 0.265, 1.55)">Bouncy</option>
+          </select>
+      </div>
+    </section>
+  </aside>
+</div>
+
+<div id="toast" class="toast">SVG Copied!</div>
+
+<script src="script.js"></script>
+</body>
+</html>
