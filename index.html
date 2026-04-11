@@ -13,16 +13,46 @@
     <div class="sidebar-header">
       <h1>BLOB GENERATOR</h1>
     </div>
-    
     <details class="control-group" open>
-      <summary class="section-header">APPEARANCE</summary>
-      <div class="color-input">
-        <span class="label">Fill</span>
-        <div class="color-with-hex">
-            <input type="color" id="fill-color" value="#ffffff">
-            <input type="text" class="hex-input" id="fill-hex" value="#ffffff">
-        </div>
+      <summary class="section-header">FILL AND APPEARANCE</summary>
+      
+      <div class="input-row select-row" style="margin-top: 0.5rem; margin-bottom: 1.5rem;">
+          <span class="label">Fill Mode</span>
+          <select id="fill-type-select" class="custom-select" style="width: 140px;">
+            <option value="solid">Solid</option>
+            <option value="linear" selected>Linear Gradient</option>
+            <option value="radial">Radial Gradient</option>
+          </select>
       </div>
+
+      <div id="solid-controls" style="display: none; margin-bottom: 1.5rem;">
+          <div class="color-input">
+            <span class="label">Color</span>
+            <div class="color-with-hex">
+                <input type="color" id="solid-color" value="#ff0080">
+                <input type="text" class="hex-input" id="solid-hex" value="#ff0080">
+            </div>
+          </div>
+      </div>
+
+      <div id="gradient-controls" style="margin-bottom: 1.5rem;">
+          <div id="stops-container">
+            <!-- Dynamic rows injected here -->
+          </div>
+          <button class="btn-secondary" id="add-stop-btn" style="width: 100%; border-style: dashed; margin-top: 0.5rem; border-color: var(--border);">+ Add Stop</button>
+          
+          <div class="input-row" style="margin-top: 1.5rem;" id="grad-angle-row">
+              <span class="label">Angle</span>
+              <input type="range" id="grad-angle" min="0" max="360" value="45">
+              <span class="value" id="grad-angle-val">45°</span>
+          </div>
+          <div class="input-row" style="margin-top: 0.5rem;" id="grad-spread-row">
+              <span class="label">Spread</span>
+              <input type="range" id="grad-spread" min="10" max="150" value="100">
+              <span class="value" id="grad-spread-val">100%</span>
+          </div>
+      </div>
+      <div style="border-top: 1px solid var(--border); margin-top: 1rem; margin-bottom: 1rem;"></div>
       <div class="input-row" style="margin-top: 1rem;">
           <span class="label">Size</span>
           <input type="range" id="size-slider" min="100" max="600" value="300">
@@ -64,7 +94,10 @@
   <main class="canvas-area">
     <div class="blob-container">
       <svg id="blob-svg" viewBox="-110 -110 220 220" xmlns="http://www.w3.org/2000/svg">
-        <path id="blob-path" d="" fill="#ffffff" />
+        <defs id="svg-defs-group"></defs>
+        <g id="post-process-group">
+          <g id="blobs-group"></g>
+        </g>
         <g id="points-group" style="opacity: 0; transition: opacity 0.2s ease;"></g>
       </svg>
     </div>
@@ -77,10 +110,57 @@
     </div>
     
     <details class="control-group" open>
+      <summary class="section-header">LAYERS</summary>
+      
+      <div id="layers-list">
+         <!-- Layers injected here -->
+      </div>
+      
+      <div class="input-row" style="margin-top: 0.5rem; margin-bottom: 1rem;">
+        <button class="btn-primary" id="add-layer-btn" style="width: 100%;">+ Add Layer</button>
+      </div>
+
+      <div class="toggle-row" style="margin-bottom: 0.5rem;">
+        <span class="label">Gooey Merge</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="gooey-toggle">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      
+      <div class="input-row select-row" id="blend-mode-row">
+          <span class="label">Blend Mode</span>
+          <select id="blend-mode-select" class="custom-select" style="width: 140px;">
+            <option value="normal">Normal</option>
+            <option value="multiply">Multiply</option>
+            <option value="screen">Screen</option>
+            <option value="overlay">Overlay</option>
+            <option value="exclusion">Exclusion</option>
+            <option value="color-dodge">Color Dodge</option>
+          </select>
+      </div>
+    </details>
+    
+    <details class="control-group" open>
+      <summary class="section-header">POST PROCESSING</summary>
+      
+      <div class="input-row" style="margin-top: 0.5rem; margin-bottom: 1rem;">
+          <span class="label">Total Blur</span>
+          <input type="range" id="global-blur" min="0" max="25" step="1" value="0">
+          <span class="value" id="global-blur-val">0</span>
+      </div>
+      
+      <div class="input-row">
+          <span class="label">Grain Noise</span>
+          <input type="range" id="global-noise" min="0" max="100" step="1" value="0">
+          <span class="value" id="global-noise-val">0%</span>
+      </div>
+    </details>
+    
+    <details class="control-group" open>
       <summary class="section-header">PLAYBACK</summary>
       <div class="input-row" style="margin-bottom: 1.5rem;">
-        <button class="btn-primary" id="play-btn" style="width: 48%;">Start</button>
-        <button class="btn-secondary" id="stop-btn" style="width: 48%;">Stop</button>
+        <button class="btn-primary" id="play-btn" style="width: 100%;">Start</button>
       </div>
       
       <div class="input-row" style="margin-bottom: 1rem;">
@@ -107,6 +187,11 @@
 
 <div id="toast" class="toast">SVG Copied!</div>
 
-<script src="script.js"></script>
+<script src="js/state.js"></script>
+<script src="js/blob.js"></script>
+<script src="js/gradient.js"></script>
+<script src="js/animation.js"></script>
+<script src="js/export.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>
