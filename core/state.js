@@ -39,3 +39,27 @@ export const state = {
 export function getActiveBlob() {
   return state.blobs[state.activeBlobIndex];
 }
+
+export function readUIState() {
+  return {
+    data: {
+      title: document.getElementById('input-title')?.value || 'Event Name',
+      date: document.getElementById('input-date')?.value || 'Date & Time',
+      location: document.getElementById('input-location')?.value || 'Location',
+      host: document.getElementById('input-host')?.value || 'Host'
+    },
+    features: {
+      hideText: document.getElementById('toggle-text')?.checked || false,
+      includeGrid: document.getElementById('toggle-grid')?.checked || false,
+      includeShapes: document.getElementById('toggle-shapes')?.checked || false
+    },
+    style: {
+      filterEffect: document.getElementById('select-filter')?.value || 'none',
+      aspectRatio: document.getElementById('select-aspect')?.value || '4/5',
+      font: document.getElementById('select-font')?.value || 'Inter',
+      palette: document.getElementById('select-palette')?.value || 'sunset',
+      textColorOption: document.getElementById('select-text-color')?.value || 'auto',
+      bgStyle: document.getElementById('select-bg-style')?.value || 'fluid-mesh'
+    }
+  };
+}
