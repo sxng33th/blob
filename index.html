@@ -6,7 +6,7 @@
   <title>Luma Interactive Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <!-- For Exporting HTML to PNG -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -20,7 +20,7 @@
         <span class="badge">PRO</span>
       </div>
 
-      <div class="control-group">
+      <section class="control-group">
         <h2 class="section-header">EVENT DETAILS</h2>
         
         <div class="input-stack">
@@ -42,9 +42,9 @@
           <label>Host / Presenter</label>
           <input type="text" id="input-host" value="Hosted by DesignClub" placeholder="Presented by...">
         </div>
-      </div>
+      </section>
 
-      <div class="control-group">
+      <section class="control-group">
         <h2 class="section-header">ASSET GENERATION</h2>
         
         <div class="input-stack">
@@ -63,6 +63,7 @@
             <option value="ocean">Ocean (Blue/Cyan)</option>
             <option value="neon">Neon (Green/Pink/Yellow)</option>
             <option value="mono">Monochrome (Silver/Grey)</option>
+            <option value="redwhite">Red & White</option>
           </select>
         </div>
 
@@ -73,9 +74,35 @@
              <span class="toggle-slider"></span>
           </label>
         </div>
-      </div>
 
-      <div class="control-group">
+        <div class="input-stack">
+          <label>Include Blueprint Grid</label>
+          <label class="toggle-switch">
+             <input type="checkbox" id="toggle-grid">
+             <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="input-stack">
+          <label>Hide Text</label>
+          <label class="toggle-switch">
+             <input type="checkbox" id="toggle-text">
+             <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="input-stack">
+          <label>Filter Effect</label>
+          <select id="select-filter" class="custom-select">
+            <option value="none" selected>None</option>
+            <option value="noise">Film Grain (Noise)</option>
+            <option value="blur">Dreamy Blur</option>
+            <option value="vignette">Dark Vignette</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="control-group">
         <h2 class="section-header">LAYOUT & TYPOGRAPHY</h2>
         
         <div class="input-stack">
@@ -98,7 +125,16 @@
             <option value="Kanit">Kanit</option>
           </select>
         </div>
-      </div>
+
+        <div class="input-stack">
+          <label>Text Color</label>
+          <select id="select-text-color" class="custom-select">
+            <option value="auto" selected>Auto (Complementary)</option>
+            <option value="white">White</option>
+            <option value="black">Black</option>
+          </select>
+        </div>
+      </section>
 
       <div class="action-footer">
         <button id="btn-generate" class="btn-primary">Generate Iterations</button>

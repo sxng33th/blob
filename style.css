@@ -1,13 +1,14 @@
 :root {
-  --bg: #09090b;
-  --panel-bg: #18181b;
-  --border: #27272a;
-  --text-main: #f4f4f5;
-  --text-muted: #a1a1aa;
+  --bg: #050505;
+  --surface: #0f0f0f;
+  --border: #222222;
+  --border-hover: #444444;
+  --text-main: #ffffff;
+  --text-dim: #666666;
   --accent: #ffffff;
   --accent-hover: #e4e4e7;
-  --primary: #3b82f6;
-  --radius: 12px;
+  --primary: #ffffff;
+  --radius: 4px;
 }
 
 * {
@@ -24,6 +25,22 @@ body {
   overflow: hidden;
 }
 
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  opacity: 0.8;
+}
+
 /* Layout */
 .studio-layout {
   display: flex;
@@ -33,7 +50,7 @@ body {
 
 .sidebar {
   width: 320px;
-  background: var(--panel-bg);
+  background: var(--surface);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -64,15 +81,17 @@ body {
 }
 
 .control-group {
-  padding: 20px;
+  padding: 32px;
   border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
 }
 
 .section-header {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   font-weight: 600;
-  color: var(--text-muted);
-  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
   margin-bottom: 16px;
 }
 
@@ -89,26 +108,29 @@ body {
 }
 
 .input-stack label {
-  font-size: 0.85rem;
-  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-dim);
 }
 
 input[type="text"],
 .custom-select {
-  background: var(--bg);
+  background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text-main);
   padding: 10px 12px;
-  border-radius: 6px;
-  font-family: inherit;
-  font-size: 0.9rem;
+  border-radius: var(--radius);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
   outline: none;
   transition: border-color 0.2s;
 }
 
 input[type="text"]:focus,
-.custom-select:focus {
-  border-color: var(--text-muted);
+.custom-select:focus,
+.custom-select:hover {
+  border-color: var(--border-hover);
 }
 
 /* Switches & Buttons */
@@ -120,24 +142,25 @@ input[type="text"]:focus,
 .btn-primary {
   width: 100%;
   background: var(--accent);
-  color: var(--bg);
+  color: #050505;
   border: none;
   padding: 12px;
-  border-radius: 6px;
+  border-radius: var(--radius);
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: opacity 0.2s;
 }
 
 .btn-primary:hover {
-  background: var(--accent-hover);
+  opacity: 0.85;
 }
 
 .toggle-switch {
   position: relative;
   display: inline-block;
-  width: 44px;
-  height: 24px;
+  width: 40px;
+  height: 20px;
 }
 
 .toggle-switch input {
@@ -153,32 +176,32 @@ input[type="text"]:focus,
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--bg);
+  background-color: var(--surface);
   border: 1px solid var(--border);
   transition: .2s;
-  border-radius: 24px;
+  border-radius: 20px;
 }
 
 .toggle-slider:before {
   position: absolute;
   content: "";
-  height: 16px;
-  width: 16px;
-  left: 3px;
-  bottom: 3px;
-  background-color: var(--text-muted);
+  height: 14px;
+  width: 14px;
+  left: 2px;
+  bottom: 2px;
+  background-color: var(--text-dim);
   transition: .2s;
   border-radius: 50%;
 }
 
 input:checked+.toggle-slider {
-  background-color: var(--primary);
-  border-color: var(--primary);
+  background-color: var(--accent);
+  border-color: var(--accent);
 }
 
 input:checked+.toggle-slider:before {
   transform: translateX(20px);
-  background-color: white;
+  background-color: #050505;
 }
 
 
@@ -187,7 +210,9 @@ input:checked+.toggle-slider:before {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: var(--bg);
+  background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-color: var(--bg);
   overflow-y: auto;
 }
 
@@ -231,7 +256,7 @@ input:checked+.toggle-slider:before {
   border-radius: 0;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.08); /* Nakshatram shadow */
   font-family: var(--flyer-font, 'Inter');
 }
 
@@ -242,6 +267,17 @@ input:checked+.toggle-slider:before {
   right: 0;
   bottom: 0;
   z-index: 1;
+}
+
+.flyer-grid {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image: 
+    linear-gradient(to right, rgba(255,255,255,0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.07) 1px, transparent 1px);
+  background-size: 40px 40px;
 }
 
 .flyer-shapes {
@@ -297,17 +333,62 @@ input:checked+.toggle-slider:before {
   opacity: 0.9;
 }
 
-.export-btn {
-  background: transparent;
-  color: var(--text-main);
-  border: 1px solid var(--border);
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  align-self: flex-start;
-  font-size: 0.8rem;
+.flyer-actions {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
 }
 
-.export-btn:hover {
-  background: var(--panel-bg);
+.flyer-card:hover .flyer-actions,
+.flyer-card:focus-within .flyer-actions {
+  opacity: 1;
+}
+
+.icon-btn {
+  background: rgba(15, 15, 15, 0.7);
+  backdrop-filter: blur(8px);
+  color: var(--text-main);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+@media (max-width: 768px) {
+  .studio-layout {
+    flex-direction: column-reverse;
+  }
+  .sidebar {
+    width: 100%;
+    height: 50vh;
+    border-right: none;
+    border-top: 1px solid var(--border);
+  }
+  .sidebar-header {
+    display: none;
+  }
+  .compositor-area {
+    height: 50vh;
+  }
+  .matrix-grid {
+    grid-template-columns: 1fr;
+    padding: 20px;
+  }
 }
